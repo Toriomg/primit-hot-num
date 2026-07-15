@@ -2,28 +2,28 @@ import { ranked } from './analysis.js';
 
 const $ = id => document.getElementById(id);
 
+// ── Estado de la base de datos local ─────────────────────────────────────────
+export function renderDBStatus(total, today, newCount) {
+  const el = $('dbStatus');
+  if (!el) return;
+  const [y, m, d] = today.split('-');
+  const dateStr   = `${d}/${m}/${y}`;
+  const newInfo   = newCount > 0
+    ? ` · <strong>+${newCount} sorteo${newCount > 1 ? 's' : ''} nuevos</strong>`
+    : ' · Al día';
+  el.innerHTML = `BD local: <strong>${total}</strong> sorteo${total !== 1 ? 's' : ''} guardados · Actualizado: ${dateStr}${newInfo}`;
+  el.classList.remove('hidden');
+}
+
 // ── Resumen superior ──────────────────────────────────────────────────────────
-export function renderSummary(draws, main, totalAvailable) {
+export function renderSummary(draws, main) {
   const dates   = draws.map(d => d.date).filter(Boolean).sort();
   const topMain = ranked(main, 1, 49)[0];
 
   $('statDraws').textContent = draws.length;
-  $('statFrom').textContent  = dates[0]      ? formatDate(dates[0])      : '—';
-  $('statTo').textContent    = dates.at(-1)  ? formatDate(dates.at(-1))  : '—';
+  $('statFrom').textContent  = dates[0]     ? formatDate(dates[0])     : '—';
+  $('statTo').textContent    = dates.at(-1) ? formatDate(dates.at(-1)) : '—';
   $('statHot').textContent   = topMain ? `${topMain.num} (${topMain.count}x)` : '—';
-
-  // Aviso si el plan limita el histórico disponible
-  const warn = $('planWarning');
-  if (warn) {
-    if (totalAvailable && draws.length < totalAvailable * 0.5) {
-      warn.textContent =
-        `El plan gratuito puede limitar el histórico accesible. ` +
-        `Se analizaron ${draws.length} sorteos de los disponibles en la API.`;
-      warn.classList.remove('hidden');
-    } else {
-      warn.classList.add('hidden');
-    }
-  }
 }
 
 // ── Lista top 10 ──────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export function drawSuggestion(main, rein) {
 export function setLoading(on) {
   $('loading').classList.toggle('hidden', !on);
   $('btnAnalyze').disabled    = on;
-  $('btnAnalyze').textContent = on ? 'Cargando…' : 'Analizar';
+  $('btnAnalyze').textContent = on ? 'Cargando…' : 'Aplicar';
 }
 
 export function showError(msg) {

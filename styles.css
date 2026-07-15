@@ -50,6 +50,7 @@ header p { color: var(--muted); margin-top: 0.35rem; font-size: 0.9rem; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.4rem 1.6rem;
+  margin: 0.5rem 0 0.5rem 0;
 }
 
 .card-title {

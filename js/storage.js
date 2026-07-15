@@ -1,33 +1,9 @@
-// Si hay un valor antiguo sin /api/v1, lo borramos para que tome el default correcto
-const _old = localStorage.getItem('prim_base');
-if (_old && !_old.includes('/api/v1')) localStorage.removeItem('prim_base');
-
-const KEYS = {
-  apiKey:  'prim_key',
-  apiBase: 'prim_base',
-  proxy:   'prim_proxy',
-  days:    'prim_days',
-};
-
-const DEFAULTS = {
-  apiKey:  '',
-  apiBase: 'https://api.loteriasapi.com/api/v1',
-  proxy:   'https://corsproxy.io/?url=',
-  days:    '60',
-};
+const DEFAULTS = { days: '60' };
 
 export function loadSettings() {
-  return {
-    apiKey:  localStorage.getItem(KEYS.apiKey)  || DEFAULTS.apiKey,
-    apiBase: localStorage.getItem(KEYS.apiBase) || DEFAULTS.apiBase,
-    proxy:   localStorage.getItem(KEYS.proxy)   || DEFAULTS.proxy,
-    days:    localStorage.getItem(KEYS.days)     || DEFAULTS.days,
-  };
+  return { days: localStorage.getItem('prim_days') || DEFAULTS.days };
 }
 
-export function saveSettings({ apiKey, apiBase, proxy, days }) {
-  localStorage.setItem(KEYS.apiKey,  apiKey);
-  localStorage.setItem(KEYS.apiBase, apiBase);
-  localStorage.setItem(KEYS.proxy,   proxy);
-  localStorage.setItem(KEYS.days,    String(days));
+export function saveSettings({ days }) {
+  localStorage.setItem('prim_days', String(days));
 }

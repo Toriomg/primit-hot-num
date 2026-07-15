@@ -22,47 +22,37 @@
     <div class="card-title">Configuración</div>
 
     <div class="advanced-toggle" id="advToggle">
-      <span id="advArrow">▶</span> Opciones avanzadas
+      <span id="advArrow">▶</span> Cómo actualizar los datos
     </div>
 
     <div id="advPanel" class="advanced-panel hidden">
-      <div class="advanced-panel-grid">
-        <div>
-          <label>URL base de la API</label>
-          <input type="text" id="apiBase" placeholder="https://api.loteriasapi.com/api/v1">
-        </div>
-        <div>
-          <label>Proxy CORS <span style="color:#e67e22">(necesario desde navegador)</span></label>
-          <input type="text" id="corsProxy" placeholder="https://corsproxy.io/?url=">
-        </div>
-      </div>
       <p class="advanced-panel-note">
-        El proxy añade las cabeceras CORS que loteriasapi.com no incluye. Déjalo en blanco
-        solo si la API permite peticiones directas desde el navegador.<br>
-        Endpoint final: {proxy}{base}/results/primitiva?from=…&amp;to=…&amp;limit=200
+        Los datos vienen del fichero <strong>seed.json</strong> incluido en la carpeta.<br>
+        Para añadir los sorteos más recientes, ejecuta el script correspondiente a tu sistema:
+        <br><br>
+        &nbsp;• <strong>Mac / Linux:</strong> doble clic en <code>update.sh</code>
+        &nbsp;• <strong>Windows:</strong> doble clic en <code>update.bat</code>
+        <br><br>
+        Puedes cambiar el número de días que descarga editando la variable <code>DIAS=90</code>
+        al principio del script. El rango de días disponible en la app se actualiza automáticamente.
       </p>
     </div>
 
     <div class="config-row">
       <div>
-        <label>
-          API Key —
-          <a href="https://loteriasapi.com/en" target="_blank"
-             style="color:var(--gold);text-decoration:none">loteriasapi.com</a>
-          (plan gratuito)
-        </label>
-        <input type="password" id="apiKey" placeholder="Pega aquí tu API key..." autocomplete="off">
-      </div>
-      <div>
-        <label>Días a analizar</label>
-        <input type="number" id="days" min="7" max="365">
+        <label>Días a analizar <span id="daysHint" style="color:#888;font-size:0.8em"></span></label>
+        <input type="number" id="days" min="1" max="365">
       </div>
       <div>
         <label>&nbsp;</label>
-        <button class="btn" id="btnAnalyze">Analizar</button>
+        <button class="btn" id="btnAnalyze">Aplicar</button>
       </div>
     </div>
   </div>
+
+  <!-- Estado BD local -->
+  <div id="dbStatus" class="hidden"
+       style="text-align:center;padding:8px 16px;font-size:0.85rem;color:#888;"></div>
 
   <!-- Cargando -->
   <div id="loading" class="hidden">
@@ -71,9 +61,6 @@
 
   <!-- Error -->
   <div id="error" class="alert hidden"></div>
-
-  <!-- Aviso plan gratuito -->
-  <div id="planWarning" class="alert hidden" style="border-color:#e67e2255;color:#e67e22;background:#1a1100"></div>
 
   <!-- Resultados -->
   <div id="results" class="hidden">

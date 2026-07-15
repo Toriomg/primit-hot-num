@@ -1,55 +1,65 @@
-import { fetchDraws }                                    from './api.js';
-import { calcFreq }                                       from './analysis.js';
-import { drawFreqChart, drawCompChart, drawReinChart }    from './charts.js';
+import { openDB, getLastDate, insertDraws, getAllDraws } from './db.js';
+import { calcFreq }                                      from './analysis.js';
+import { drawFreqChart, drawCompChart, drawReinChart }   from './charts.js';
 import { renderSummary, drawHotList, drawSuggestion,
-         setLoading, showError, hideError }               from './ui.js';
-import { loadSettings, saveSettings }                     from './storage.js';
+         renderDBStatus, setLoading, showError, hideError } from './ui.js';
+import { loadSettings, saveSettings }                    from './storage.js';
 
 const $ = id => document.getElementById(id);
 
-// ── Inicialización ────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const s = loadSettings();
-  $('apiKey').value    = s.apiKey;
-  $('apiBase').value   = s.apiBase;
-  $('corsProxy').value = s.proxy;
-  $('days').value      = s.days;
+let db;
 
-  $('btnAnalyze').addEventListener('click', analyze);
-  $('advToggle').addEventListener('click', toggleAdvanced);
+document.addEventListener('DOMContentLoaded', async () => {
+  const { days } = loadSettings();
+  $('days').value = days;
+
+  $('btnAnalyze').addEventListener('click', render);
+  $('advToggle').addEventListener('click', () => {
+    const hidden = $('advPanel').classList.toggle('hidden');
+    $('advArrow').textContent = hidden ? '▶' : '▼';
+  });
+
+  db = await openDB();
+  await render();
 });
 
-// ── Panel avanzado ────────────────────────────────────────────────────────────
-function toggleAdvanced() {
-  const hidden = $('advPanel').classList.toggle('hidden');
-  $('advArrow').textContent = hidden ? '▶' : '▼';
-}
-
-// ── Flujo principal ───────────────────────────────────────────────────────────
-async function analyze() {
-  const key   = $('apiKey').value.trim();
-  const base  = $('apiBase').value.trim().replace(/\/$/, '');
-  const proxy = $('corsProxy').value.trim();
-  const days  = Math.max(7, Math.min(365, parseInt($('days').value) || 60));
-
-  if (!key) {
-    showError('Introduce tu API key de loteriasapi.com.');
-    return;
-  }
-
-  saveSettings({ apiKey: key, apiBase: base, proxy, days });
-
+async function render() {
   setLoading(true);
   hideError();
   $('results').classList.add('hidden');
 
   try {
-    const { draws, totalAvailable } = await fetchDraws(base, proxy, key, days);
-    if (!draws.length) throw new Error('No se encontraron sorteos en el período indicado.');
+    // Primera vez: cargar seed.json en IndexedDB
+    const lastDate = await getLastDate(db);
+    if (!lastDate) {
+      const seed = await loadSeed();
+      if (!seed.length) throw new Error(
+        'seed.json no encontrado o vacío.\n' +
+        'Ejecuta update.sh (Mac/Linux) o update.bat (Windows) para generar los datos.'
+      );
+      await insertDraws(db, seed);
+    }
+
+    const allDraws = await getAllDraws(db);
+    if (!allDraws.length) throw new Error('No hay datos. Ejecuta el script de actualización.');
+
+    // Límite dinámico: máximo = días desde el sorteo más antiguo hasta hoy
+    const oldest = allDraws[allDraws.length - 1].date;
+    const maxDays = daysBetween(oldest, localIsoDate(new Date()));
+    $('days').max = String(maxDays);
+
+    // Días solicitados, clampeados al máximo disponible
+    let days = Math.max(1, Math.min(maxDays, parseInt($('days').value) || 60));
+    $('days').value = String(days);
+    saveSettings({ days });
+
+    const cutoffStr = daysAgoIso(days);
+    const draws     = allDraws.filter(d => d.date >= cutoffStr);
+
+    renderDBStatus(allDraws.length, localIsoDate(new Date()), 0);
 
     const { main, comp, rein } = calcFreq(draws);
-
-    renderSummary(draws, main, totalAvailable);
+    renderSummary(draws, main);
     drawFreqChart(main);
     drawCompChart(comp);
     drawReinChart(rein);
@@ -62,4 +72,34 @@ async function analyze() {
   } finally {
     setLoading(false);
   }
+}
+
+async function loadSeed() {
+  try {
+    const res = await fetch('./seed.json');
+    return res.ok ? await res.json() : [];
+  } catch {
+    return [];
+  }
+}
+
+// ── Helpers de fecha ──────────────────────────────────────────────────────────
+function localIsoDate(d) {
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function daysAgoIso(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return localIsoDate(d);
+}
+
+function daysBetween(isoA, isoB) {
+  const a = new Date(isoA + 'T12:00:00');
+  const b = new Date(isoB + 'T12:00:00');
+  return Math.max(1, Math.round((b - a) / 86400000));
 }
