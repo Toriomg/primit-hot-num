@@ -1,3 +1,7 @@
+// Si hay un valor antiguo sin /api/v1, lo borramos para que tome el default correcto
+const _old = localStorage.getItem('prim_base');
+if (_old && !_old.includes('/api/v1')) localStorage.removeItem('prim_base');
+
 const KEYS = {
   apiKey:  'prim_key',
   apiBase: 'prim_base',
