@@ -44,12 +44,12 @@ async function analyze() {
   $('results').classList.add('hidden');
 
   try {
-    const draws = await fetchDraws(base, proxy, key, days);
+    const { draws, totalAvailable } = await fetchDraws(base, proxy, key, days);
     if (!draws.length) throw new Error('No se encontraron sorteos en el período indicado.');
 
     const { main, comp, rein } = calcFreq(draws);
 
-    renderSummary(draws, main);
+    renderSummary(draws, main, totalAvailable);
     drawFreqChart(main);
     drawCompChart(comp);
     drawReinChart(rein);

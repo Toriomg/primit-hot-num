@@ -3,7 +3,7 @@ import { ranked } from './analysis.js';
 const $ = id => document.getElementById(id);
 
 // ── Resumen superior ──────────────────────────────────────────────────────────
-export function renderSummary(draws, main) {
+export function renderSummary(draws, main, totalAvailable) {
   const dates   = draws.map(d => d.date).filter(Boolean).sort();
   const topMain = ranked(main, 1, 49)[0];
 
@@ -11,6 +11,19 @@ export function renderSummary(draws, main) {
   $('statFrom').textContent  = dates[0]      ? formatDate(dates[0])      : '—';
   $('statTo').textContent    = dates.at(-1)  ? formatDate(dates.at(-1))  : '—';
   $('statHot').textContent   = topMain ? `${topMain.num} (${topMain.count}x)` : '—';
+
+  // Aviso si el plan limita el histórico disponible
+  const warn = $('planWarning');
+  if (warn) {
+    if (totalAvailable && draws.length < totalAvailable * 0.5) {
+      warn.textContent =
+        `El plan gratuito puede limitar el histórico accesible. ` +
+        `Se analizaron ${draws.length} sorteos de los disponibles en la API.`;
+      warn.classList.remove('hidden');
+    } else {
+      warn.classList.add('hidden');
+    }
+  }
 }
 
 // ── Lista top 10 ──────────────────────────────────────────────────────────────
