@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primitiva · Números Calientes</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:      #0d0d1a;
+      --card:    #14142b;
+      --card2:   #1a1a35;
+      --gold:    #f4c430;
+      --gold2:   #d4a820;
+      --red:     #e74c3c;
+      --orange:  #e67e22;
+      --amber:   #f39c12;
+      --blue:    #4895ef;
+      --text:    #dde1ea;
+      --muted:   #7a7a9a;
+      --border:  #252545;
+      --radius:  14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem 1rem 3rem;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: -0.5px;
+    }
+    header p { color: var(--muted); margin-top: 0.35rem; font-size: 0.9rem; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.6rem;
+    }
+
+    .card-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    /* ── Config ── */
+    .config-row {
+      display: grid;
+      grid-template-columns: 1fr 120px auto;
+      gap: 0.8rem;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      color: var(--text);
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--gold); }
+
+    .advanced-toggle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .advanced-toggle:hover { color: var(--text); }
+
+    .advanced-panel {
+      margin-bottom: 0.8rem;
+      padding: 0.9rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    /* ── Button ── */
+    .btn {
+      background: var(--gold);
+      color: #0a0a14;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.3rem;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .btn:hover  { background: var(--gold2); }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { background: #2a2a3a; color: #555; cursor: not-allowed; }
+
+    /* ── Summary ── */
+    .summary {
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Charts ── */
+    .chart-wrap { position: relative; }
+
+    /* ── Hot list ── */
+    .hot-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.5rem;
+    }
+    .hot-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .hot-rank  { font-size: 0.68rem; color: var(--muted); min-width: 18px; }
+    .hot-num   { font-weight: 800; font-size: 1.05rem; min-width: 26px; }
+    .hot-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .hot-bar-fill { height: 100%; border-radius: 2px; }
+    .hot-count { font-size: 0.7rem; color: var(--muted); }
+
+    /* ── Suggestion ── */
+    .sugg-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .sugg-ball {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      background: radial-gradient(circle at 38% 32%, #f7d060, #d4940a);
+      color: #0a0a14;
+      box-shadow: 0 4px 18px #f4c43033;
+    }
+    .rein-ball {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: radial-gradient(circle at 38% 32%, #74b9ff, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px #4895ef33;
+    }
+    .sugg-sep { color: var(--muted); font-size: 1.4rem; margin: 0 0.2rem; }
+    .sugg-item { display: flex; flex-direction: column; align-items: center; }
+    .sugg-label { font-size: 0.68rem; color: var(--muted); margin-top: 0.3rem; }
+
+    .info-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 1rem;
+      line-height: 1.6;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Alert / Spinner ── */
+    .alert {
+      background: #1e0a0a;
+      border: 1px solid #e74c3c55;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      color: #e74c3c;
+      font-size: 0.88rem;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    .spinner-wrap { display: flex; justify-content: center; padding: 2rem; }
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 680px) {
+      .two-col    { grid-template-columns: 1fr; }
+      .config-row { grid-template-columns: 1fr; }
+      header h1   { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>La Primitiva · Números Calientes</h1>
+  <p>Análisis de frecuencias basado en los sorteos recientes</p>
+</header>
+
+<div class="container">
+
+  <!-- ── Config ── -->
+  <div class="card">
+    <div class="card-title">Configuración</div>
+
+    <div class="advanced-toggle" onclick="toggleAdvanced()">
+      <span id="advArrow">▶</span> Opciones avanzadas
+    </div>
+
+    <div id="advPanel" class="advanced-panel hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem">
+        <div>
+          <label>URL base de la API</label>
+          <input type="text" id="apiBase" value="https://api.loteriasapi.com/api/v1"
+                 placeholder="https://api.loteriasapi.com/api/v1">
+        </div>
+        <div>
+          <label>Proxy CORS <span style="color:#e67e22">(necesario desde navegador)</span></label>
+          <input type="text" id="corsProxy" value="https://corsproxy.io/?url="
+                 placeholder="https://corsproxy.io/?url=">
+        </div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted)">
+        El proxy añade las cabeceras CORS que loteriasapi.com no incluye. Déjalo en blanco solo si la API permite peticiones directas desde el navegador.
+        Endpoint final: {proxy}{base}/results/primitiva?from=…&to=…&limit=200
+      </p>
+    </div>
+
+    <div class="config-row">
+      <div>
+        <label>API Key — <a href="https://loteriasapi.com/en" target="_blank"
+          style="color:var(--gold);text-decoration:none">loteriasapi.com</a> (plan gratuito)</label>
+        <input type="password" id="apiKey" placeholder="Pega aquí tu API key..." autocomplete="off">
+      </div>
+      <div>
+        <label>Días a analizar</label>
+        <input type="number" id="days" value="60" min="7" max="365">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn" id="btnAnalyze" onclick="analyze()">Analizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div id="loading" class="hidden">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ── Error ── -->
+  <div id="error" class="alert hidden"></div>
+
+  <!-- ── Results ── -->
+  <div id="results" class="hidden">
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="summary">
+        <div>
+          <div class="stat-value" id="statDraws">—</div>
+          <div class="stat-label">Sorteos analizados</div>
+        </div>
+        <div>
+          <div class="stat-value" id="statFrom">—</div>
+          <div class="stat-label">Primer sorteo</div>
+        </div>
+        <div>
+          <div class="stat-value" id="statTo">—</div>
+          <div class="stat-label">Último sorteo</div>
+        </div>
+        <div>
+          <div class="stat-value" id="statHot">—</div>
+          <div class="stat-label">Número más caliente</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frequency chart 1-49 -->
+    <div class="card">
+      <div class="card-title">Frecuencia de los números principales (1–49)</div>
+      <div class="chart-wrap" style="height:290px">
+        <canvas id="chartFreq"></canvas>
+      </div>
+    </div>
+
+    <!-- Hot list + Complementario -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Top 10 números calientes</div>
+        <div class="hot-list" id="hotList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Frecuencia — Complementario (1–49)</div>
+        <div class="chart-wrap" style="height:230px">
+          <canvas id="chartComp"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reintegro -->
+    <div class="card">
+      <div class="card-title">Frecuencia — Reintegro (0–9)</div>
+      <div class="chart-wrap" style="height:170px">
+        <canvas id="chartRein"></canvas>
+      </div>
+    </div>
+
+    <!-- Suggestion -->
+    <div class="card">
+      <div class="card-title">Combinación sugerida</div>
+      <div class="sugg-row" id="suggRow"></div>
+      <p class="info-note">
+        Los 6 números son los más frecuentes en el período analizado, ordenados de menor a mayor.
+        El reintegro es el dígito (0–9) que más veces ha aparecido.<br>
+        <strong>Recuerda:</strong> La frecuencia histórica no predice sorteos futuros — la lotería es puro azar.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Persist settings ──────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+(function loadSaved() {
+  $('apiKey').value    = localStorage.getItem('prim_key')   || '';
+  $('apiBase').value   = localStorage.getItem('prim_base')  || 'https://api.loteriasapi.com/api/v1';
+  $('corsProxy').value = localStorage.getItem('prim_proxy') || 'https://corsproxy.io/?url=';
+  $('days').value      = localStorage.getItem('prim_days')  || '60';
+})();
+
+function toggleAdvanced() {
+  const hidden = $('advPanel').classList.toggle('hidden');
+  $('advArrow').textContent = hidden ? '▶' : '▼';
+}
+
+// ── Chart instances ───────────────────────────────────────────────────────────
+let charts = {};
+
+// ── Entry point ──────────────────────────────────────────────────────────────
+async function analyze() {
+  const key   = $('apiKey').value.trim();
+  const base  = $('apiBase').value.trim().replace(/\/$/, '');
+  const proxy = $('corsProxy').value.trim();
+  const days  = Math.max(7, Math.min(365, parseInt($('days').value) || 60));
+
+  if (!key) { showError('Introduce tu API key de loteriasapi.com.'); return; }
+
+  localStorage.setItem('prim_key',   key);
+  localStorage.setItem('prim_base',  base);
+  localStorage.setItem('prim_proxy', proxy);
+  localStorage.setItem('prim_days',  days);
+
+  setLoading(true);
+  $('results').classList.add('hidden');
+  $('error').classList.add('hidden');
+
+  try {
+    const draws = await fetchDraws(base, proxy, key, days);
+    if (!draws.length) throw new Error('No se encontraron sorteos en el período indicado.');
+    render(draws);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function fetchDraws(base, proxy, key, days) {
+  const today = new Date();
+  const from  = new Date(today);
+  from.setDate(from.getDate() - days);
+
+  const target = `${base}/results/primitiva` +
+    `?from=${isoDate(from)}&to=${isoDate(today)}&limit=200`;
+
+  const url = proxy ? `${proxy}${encodeURIComponent(target)}` : target;
+
+  const res = await fetch(url, {
+    headers: { 'X-API-Key': key, 'Accept': 'application/json' }
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Error ${res.status} de la API:\n${body.slice(0, 500)}`);
+  }
+
+  const json = await res.json();
+  return parseDraws(json);
+}
+
+function parseDraws(raw) {
+  // loteriasapi.com wraps everything in { success, data }
+  const unwrapped = (raw?.success !== undefined && raw.data) ? raw.data : raw;
+
+  // data can be an array or { results:[], draws:[], ... }
+  const arr = Array.isArray(unwrapped) ? unwrapped
+            : unwrapped?.results ?? unwrapped?.draws ?? unwrapped?.data ?? null;
+
+  if (!arr) {
+    throw new Error(
+      'Formato de respuesta no reconocido. Respuesta recibida:\n' +
+      JSON.stringify(raw).slice(0, 800)
+    );
+  }
+
+  return arr.map(d => {
+    // loteriasapi.com uses: combination[], drawDate, resultData.complementario/reintegro
+    const numbers = (d.combination ?? d.numbers ?? d.winning_numbers ?? d.numeros ?? []).map(Number);
+    const rd      = d.resultData ?? {};
+    return {
+      date:           d.drawDate      ?? d.date ?? d.draw_date ?? d.fecha ?? '',
+      numbers,
+      complementario: Number(rd.complementario ?? d.complementario ?? d.bonus ?? 0),
+      reintegro:      Number(rd.reintegro      ?? d.reintegro ?? d.refund ?? -1),
+    };
+  }).filter(d => d.numbers.length === 6);
+}
+
+// ── Analysis ─────────────────────────────────────────────────────────────────
+function calcFreq(draws) {
+  const main = new Array(50).fill(0);  // idx 1-49
+  const comp = new Array(50).fill(0);
+  const rein = new Array(10).fill(0);  // idx 0-9
+
+  for (const d of draws) {
+    for (const n of d.numbers)
+      if (n >= 1 && n <= 49) main[n]++;
+    if (d.complementario >= 1 && d.complementario <= 49) comp[d.complementario]++;
+    if (d.reintegro      >= 0 && d.reintegro      <=  9) rein[d.reintegro]++;
+  }
+  return { main, comp, rein };
+}
+
+function ranked(arr, lo, hi) {
+  return arr.slice(lo, hi + 1)
+    .map((count, i) => ({ num: i + lo, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// ── Bar colours for main chart (hotter = redder) ──────────────────────────────
+function makeBarColors(mainFreq) {
+  const order = ranked(mainFreq, 1, 49);
+  const color = new Array(50);
+  const palette = [
+    '#e74c3c','#e74c3c','#e74c3c',   // top 3 — red
+    '#e67e22','#e67e22','#e67e22',   // 4-6   — orange
+    '#f39c12','#f39c12','#f39c12',   // 7-9   — amber
+    '#f4c430',                        // 10    — gold
+  ];
+  order.forEach(({ num }, i) => {
+    color[num] = i < palette.length ? palette[i]
+               : i < 25 ? '#4895ef'   // mid   — blue
+               : '#253058';           // cold  — dark blue
+  });
+  return color;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(draws) {
+  const { main, comp, rein } = calcFreq(draws);
+
+  // Summary
+  const dates   = draws.map(d => d.date).filter(Boolean).sort();
+  const topMain = ranked(main, 1, 49)[0];
+
+  $('statDraws').textContent = draws.length;
+  $('statFrom').textContent  = dates[0]      ? displayDate(dates[0])      : '—';
+  $('statTo').textContent    = dates.at(-1)  ? displayDate(dates.at(-1))  : '—';
+  $('statHot').textContent   = topMain ? `${topMain.num} (${topMain.count}x)` : '—';
+
+  drawFreqChart(main);
+  drawCompChart(comp);
+  drawReinChart(rein);
+  drawHotList(main);
+  drawSuggestion(main, rein);
+
+  $('results').classList.remove('hidden');
+}
+
+function drawFreqChart(main) {
+  destroyChart('freq');
+  const colors = makeBarColors(main);
+  const bgArr  = Array.from({ length: 49 }, (_, i) => colors[i + 1]);
+
+  charts.freq = new Chart($('chartFreq'), {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 49 }, (_, i) => String(i + 1)),
+      datasets: [{
+        data: main.slice(1, 50),
+        backgroundColor: bgArr,
+        borderWidth: 0,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ([item]) => `Número ${item.label}`,
+            label: item => `Apariciones: ${item.raw}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#555', font: { size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: '#666' }, grid: { color: '#1c1c35' } }
+      }
+    }
+  });
+}
+
+function drawCompChart(comp) {
+  destroyChart('comp');
+  charts.comp = new Chart($('chartComp'), {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 49 }, (_, i) => String(i + 1)),
+      datasets: [{
+        data: comp.slice(1, 50),
+        backgroundColor: '#4895ef99',
+        borderColor: '#4895ef',
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#555', font: { size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: '#666' }, grid: { color: '#1c1c35' } }
+      }
+    }
+  });
+}
+
+function drawReinChart(rein) {
+  destroyChart('rein');
+  const maxR   = Math.max(...rein);
+  const bgArr  = rein.map(v => v === maxR ? '#f4c430' : '#4895ef88');
+
+  charts.rein = new Chart($('chartRein'), {
+    type: 'bar',
+    data: {
+      labels: ['0','1','2','3','4','5','6','7','8','9'],
+      datasets: [{
+        data: rein,
+        backgroundColor: bgArr,
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ([item]) => `Reintegro ${item.label}`,
+            label: item => `Apariciones: ${item.raw}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#aaa' }, grid: { display: false } },
+        y: { ticks: { color: '#666' }, grid: { color: '#1c1c35' } }
+      }
+    }
+  });
+}
+
+function drawHotList(main) {
+  const top10   = ranked(main, 1, 49).slice(0, 10);
+  const maxCount = top10[0]?.count || 1;
+  const colors  = [
+    '#e74c3c','#e74c3c','#e74c3c',
+    '#e67e22','#e67e22','#e67e22',
+    '#f39c12','#f39c12',
+    '#f4c430','#f4c430',
+  ];
+
+  $('hotList').innerHTML = top10.map(({ num, count }, i) => `
+    <div class="hot-item">
+      <span class="hot-rank">#${i + 1}</span>
+      <span class="hot-num" style="color:${colors[i]}">${num}</span>
+      <div class="hot-bar-wrap">
+        <div class="hot-bar-fill"
+             style="width:${(count / maxCount * 100).toFixed(1)}%;background:${colors[i]}"></div>
+      </div>
+      <span class="hot-count">${count}x</span>
+    </div>
+  `).join('');
+}
+
+function drawSuggestion(main, rein) {
+  const top6  = ranked(main, 1, 49).slice(0, 6).map(x => x.num).sort((a, b) => a - b);
+  const topR  = rein.reduce((best, v, i) => v > rein[best] ? i : best, 0);
+
+  $('suggRow').innerHTML =
+    top6.map(n => `
+      <div class="sugg-item">
+        <div class="sugg-ball">${n}</div>
+      </div>
+    `).join('') +
+    `<span class="sugg-sep">+</span>
+     <div class="sugg-item">
+       <div class="rein-ball">${topR}</div>
+       <div class="sugg-label">Reintegro</div>
+     </div>`;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function isoDate(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function displayDate(str) {
+  // YYYY-MM-DD → DD/MM/YYYY
+  const [y, m, d] = str.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function setLoading(on) {
+  $('loading').classList.toggle('hidden', !on);
+  $('btnAnalyze').disabled = on;
+  $('btnAnalyze').textContent = on ? 'Cargando…' : 'Analizar';
+}
+
+function showError(msg) {
+  const el = $('error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
